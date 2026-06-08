@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>寶可夢數學對戰學堂-大小比較版</title>
+    <style>
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 700px;
+        }
+
+        /* 新增：關卡選擇選單 */
+        .mode-selection {
+            background: #2c3e50;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        .btn-mode {
+            flex: 1;
+            padding: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #7f8c8d;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-mode.active {
+            background: #e67e22;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        /* 頂部：對戰區域 */
+        .battle-arena {
+            background: linear-gradient(to bottom, #87CEEB, #E0F6FF);
+            padding: 15px 20px;
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            position: relative;
+        }
+
+        .pokemon-stage {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        .pokemon-display {
+            text-align: center;
+            flex: 1;
+        }
+
+        .pokemon-img {
+            font-size: 70px;
+            line-height: 1;
+            margin-bottom: 5px;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
+            transition: transform 0.3s;
+        }
+
+        .hurt {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(0px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(2px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(2px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(0deg); }
+        }
+
+        .pokemon-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+            background: rgba(255,255,255,0.7);
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .hp-bar-container {
+            width: 80%;
+            height: 12px;
+            background-color: #e0e0e0;
+            border-radius: 6px;
+            margin: 5px auto;
+            overflow: hidden;
+            border: 2px solid #333;
+        }
+
+        .hp-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 100%;
+            transition: width 0.5s, background-color 0.3s;
+        }
+
+        .battle-msg {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            text-align: center;
+            min-height: 20px;
+            width: 80%;
+        }
+
+        /* 音樂提示控制條 */
+        .music-hint {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: -5px;
+        }
+
+        /* 中部：數學題區域 */
+        .question-area {
+            background: #fff;
+            padding: 20px;
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-top: 4px solid #f0f0f0;
+            border-bottom: 4px solid #f0f0f0;
+            text-align: center;
+        }
+
+        .question-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        /* 底部答案按鈕 */
+        .options-area {
+            background: #f9f9f9;
+            padding: 25px;
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-option {
+            background: white;
+            border: 3px solid #3498db;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #2980b9;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 5px 0 #2980b9;
+        }
+
+        .btn-option:hover {
+            background: #eaf2f8;
+        }
+
+        .btn-option:active {
+            transform: translateY(5px);
+            box-shadow: 0 0px 0 #2980b9;
+        }
+
+        /* 底部背包狀態 */
+        #collection-box {
+            padding: 10px;
+            text-align: center;
+            background: #eef2f3;
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body onclick="startAudio()"> <div id="game-container">
+    
+    <div class="mode-selection">
+        <button id="mode-greater" class="btn-mode active" onclick="changeGameMode('greater')">🔥 大於挑戰 (＞)</button>
+        <button id="mode-less" class="btn-mode" onclick="changeGameMode('less')">💧 小於挑戰 (＜)</button>
+    </div>
+
+    <div class="battle-arena">
+        <div class="pokemon-stage">
+            <div class="pokemon-display" id="player-side">
+                <div class="pokemon-img" id="player-img">🦎</div>
+                <div class="pokemon-name" id="player-name">小火龍 (勝:0)</div>
+                <div class="hp-bar-container">
+                    <div class="hp-bar" id="player-hp"></div>
+                </div>
+            </div>
+            
+            <div style="font-size: 24px; font-weight: bold; color: #e74c3c;">VS</div>
+
+            <div class="pokemon-display" id="enemy-side">
+                <div class="pokemon-img" id="enemy-img">🐢</div>
+                <div class="pokemon-name" id="enemy-name">傑尼龜</div>
+                <div class="hp-bar-container">
+                    <div class="hp-bar" id="enemy-hp"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="battle-msg" id="battle-msg">歡迎！點擊上方切換關卡，點擊答案即可播放音樂！</div>
+        <div class="music-hint">🎵 8-bit 電子背景音樂運作中</div>
+    </div>
+
+    <div class="question-area">
+        <div class="question-text" id="question-text">載入中...</div>
+    </div>
+
+    <div class="options-area">
+        <button class="btn-option" onclick="checkAnswer(0)" id="opt0">選項 A</button>
+        <button class="btn-option" onclick="checkAnswer(1)" id="opt1">選項 B</button>
+    </div>
+
+    <div id="collection-box">
+        我的背包：<span id="collection-list">小火龍</span>
+    </div>
+</div>
+
+<script>
+    // --- 聲音引擎 (Web Audio API) ---
+    let audioCtx = null;
+    let bgmInterval = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            playBGM();
+        }
+    }
+
+    function startAudio() {
+        initAudio();
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playBGM() {
+        if (bgmInterval) return;
+        const notes = [
+            261.63, 293.66, 329.63, 349.23, 392.00, 349.23, 329.63, 293.66,
+            329.63, 349.23, 392.00, 440.00, 493.88, 440.00, 392.00, 349.23
+        ];
+        let step = 0;
+
+        bgmInterval = setInterval(() => {
+            if (!audioCtx) return;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(notes[step % notes.length], audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.25);
+            step++;
+        }, 300);
+    }
+
+    function playSound(type) {
+        if (!audioCtx) return;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime); 
+            osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+    }
+
+    // --- 遊戲邏輯 ---
+    const pokemonDatabase = {
+        fire: [
+            { name: "小火龍", img: "🦎" },
+            { name: "火恐龍", img: "🦖" },
+            { name: "噴火龍", img: "🐉" }
+        ],
+        water: [
+            { name: "傑尼龜", img: "🐢" },
+            { name: "卡咪龜", img: "🦭" },
+            { name: "水箭龜", img: "🐋" }
+        ],
+        grass: [
+            { name: "妙蛙種子", img: "🌱" },
+            { name: "妙蛙草", img: "🌿" },
+            { name: "妙蛙花", img: "🌳" }
+        ]
+    };
+
+    let gameState = {
+        gameMode: 'greater', // 'greater' 代表大於關卡，'less' 代表小於關卡
+        playerType: 'fire',
+        playerStage: 0,
+        playerWins: 0,
+        playerHP: 3,
+        enemyType: 'water',
+        enemyStage: 0,
+        enemyHP: 3,
+        currentCorrectAnswer: '',
+        collection: ["小火龍"],
+        isLock: false
+    };
+
+    // 切換關卡功能
+    function changeGameMode(mode) {
+        if(gameState.gameMode === mode) return;
+        gameState.gameMode = mode;
+        
+        // 更新按鈕外觀
+        document.getElementById('mode-greater').classList.toggle('active', mode === 'greater');
+        document.getElementById('mode-less').classList.toggle('active', mode === 'less');
+        
+        document.getElementById('battle-msg').innerText = `已切換至【${mode === 'greater' ? '大於 ＞' : '小於 ＜'}】挑戰！`;
+        
+        // 重新出題
+        generateQuestion();
+    }
+
+    function updateUI() {
+        const pData = pokemonDatabase[gameState.playerType][gameState.playerStage];
+        document.getElementById('player-img').innerText = pData.img;
+        document.getElementById('player-name').innerText = `${pData.name} (勝:${gameState.playerWins})`;
+        const pHPBar = document.getElementById('player-hp');
+        pHPBar.style.width = (gameState.playerHP / 3 * 100) + '%';
+        pHPBar.style.backgroundColor = gameState.playerHP === 1 ? '#e74c3c' : '#4CAF50';
+
+        const eData = pokemonDatabase[gameState.enemyType][gameState.enemyStage];
+        document.getElementById('enemy-img').innerText = eData.img;
+        document.getElementById('enemy-name').innerText = eData.name;
+        const eHPBar = document.getElementById('enemy-hp');
+        eHPBar.style.width = (gameState.enemyHP / 3 * 100) + '%';
+        eHPBar.style.backgroundColor = gameState.enemyHP === 1 ? '#e74c3c' : '#4CAF50';
+
+        document.getElementById('collection-list').innerText = gameState.collection.join(', ');
+    }
+
+    function generateQuestion() {
+        gameState.isLock = false;
+        
+        // 隨機決定要出 1位數、2位數 還是 3位數的題目
+        const digits = Math.floor(Math.random() * 3) + 1; 
+
+        let min = digits === 1 ? 1 : (digits === 2 ? 10 : 100);
+        let max = digits === 1 ? 9 : (digits === 2 ? 99 : 999);
+
+        let n1 = Math.floor(Math.random() * (max - min + 1)) + min;
+        let n2 = Math.floor(Math.random() * (max - min + 1)) + min;
+        while (n1 === n2) {
+            n2 = Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // 依據目前選擇的關卡，鎖定符號與邏輯
+        const isGreater = (gameState.gameMode === 'greater');
+        const sign = isGreater ? " ＞ " : " ＜ ";
+        let correctAnswerString = "";
+        let wrongAnswerString = "";
+
+        if (isGreater) {
+            if (n1 > n2) {
+                correctAnswerString = `${n1}${sign}${n2}`;
+                wrongAnswerString = `${n2}${sign}${n1}`;
+            } else {
+                correctAnswerString = `${n2}${sign}${n1}`;
+                wrongAnswerString = `${n1}${sign}${n2}`;
+            }
+        } else {
+            if (n1 < n2) {
+                correctAnswerString = `${n1}${sign}${n2}`;
+                wrongAnswerString = `${n2}${sign}${n1}`;
+            } else {
+                correctAnswerString = `${n2}${sign}${n1}`;
+                wrongAnswerString = `${n1}${sign}${n2}`;
+            }
+        }
+
+        gameState.currentCorrectAnswer = correctAnswerString;
+
+        document.getElementById('question-text').innerHTML = `請將下列數字由 ${isGreater ? '【大至小 ＞】' : '【小至大 ＜】'} 排列：<br><br><span style="color:#e67e22; font-size: 32px;">${n1} ， ${n2}</span>`;
+
+        let options = [correctAnswerString, wrongAnswerString];
+        options.sort(() => Math.random() - 0.5);
+
+        document.getElementById('opt0').innerText = options[0];
+        document.getElementById('opt1').innerText = options[1];
+    }
+
+    function checkAnswer(btnIdx) {
+        if(gameState.isLock) return;
+        gameState.isLock = true;
+
+        startAudio(); 
+
+        const selectedAnswer = document.getElementById(`opt${btnIdx}`).innerText;
+        const msgText = document.getElementById('battle-msg');
+
+        if(selectedAnswer === gameState.currentCorrectAnswer) {
+            gameState.enemyHP--;
+            msgText.innerText = "💥 答對了！給予對手一記重擊！";
+            playSound('correct'); 
+            document.getElementById('enemy-side').classList.add('hurt');
+            setTimeout(() => document.getElementById('enemy-side').classList.remove('hurt'), 500);
+        } else {
+            gameState.playerHP--;
+            msgText.innerText = `❌ 答錯了！正確是 ${gameState.currentCorrectAnswer}`;
+            playSound('wrong'); 
+            document.getElementById('player-side').classList.add('hurt');
+            setTimeout(() => document.getElementById('player-side').classList.remove('hurt'), 500);
+        }
+
+        updateUI();
+
+        setTimeout(() => {
+            if(gameState.enemyHP <= 0) {
+                handleVictory();
+            } else if(gameState.playerHP <= 0) {
+                handleDefeat();
+            } else {
+                generateQuestion();
+            }
+        }, 1500);
+    }
+
+    function handleVictory() {
+        const msgText = document.getElementById('battle-msg');
+        const enemyName = pokemonDatabase[gameState.enemyType][gameState.enemyStage].name;
+        
+        if(!gameState.collection.includes(enemyName)) {
+            gameState.collection.push(enemyName);
+        }
+        msgText.innerText = `🎉 勝利！你成功捕捉了 ${enemyName}！`;
+
+        gameState.playerWins++;
+        const currentChain = pokemonDatabase[gameState.playerType];
+        
+        if(gameState.playerWins >= 2 && gameState.playerStage < 2) {
+            gameState.playerStage++;
+            gameState.playerWins = 0;
+            const newName = currentChain[gameState.playerStage].name;
+            msgText.innerText += ` ✨ 喔？寶可夢正在進化... 恭喜進化成 ${newName}！`;
+            if(!gameState.collection.includes(newName)) {
+                gameState.collection.push(newName);
+            }
+        }
+
+        setTimeout(() => { nextMatch(); }, 2500);
+    }
+
+    function handleDefeat() {
+        alert("你的寶可夢倒下了！別氣餒，重整旗鼓再試一次！");
+        gameState.playerHP = 3;
+        gameState.enemyHP = 3;
+        updateUI();
+        generateQuestion();
+    }
+
+    function nextMatch() {
+        const types = ['fire', 'water', 'grass'];
+        gameState.enemyType = types[Math.floor(Math.random() * types.length)];
+        gameState.enemyStage = Math.floor(Math.random() * 3);
+        
+        gameState.playerHP = 3;
+        gameState.enemyHP = 3;
+        
+        document.getElementById('battle-msg').innerText = "遇到新的對手了！對戰開始！";
+        updateUI();
+        generateQuestion();
+    }
+
+    // 啟動遊戲
+    updateUI();
+    generateQuestion();
+</script>
+
+</body>
+</html>
